@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>тарапо.ру — учебная среда для Python</title>
+<meta name="description" content="тарапо.ру — учебный проект: интерактивная среда для выполнения кода на Python в браузере. Для студентов и преподавателей."/>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-elev: #161b22;
+    --bg-code: #1e242c;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-dim: #9da7b3;
+    --accent: #58a6ff;
+    --accent-2: #7ee787;
+    --warn: #d29922;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  header {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(13,17,23,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .header-inner {
+    max-width: 1100px; margin: 0 auto;
+    padding: 14px 20px;
+    display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  }
+  .logo { display: flex; align-items: center; gap: 10px;
+    font-size: 21px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); }
+  .logo-mark {
+    width: 34px; height: 34px; border-radius: 9px;
+    background: linear-gradient(135deg, #58a6ff, #7ee787);
+    display: grid; place-items: center;
+    font-size: 18px; font-weight: 800; color: #0d1117;
+  }
+  .logo span.ru { color: var(--accent-2); }
+  nav.main-nav { display: flex; gap: 22px; font-size: 14px; }
+  nav.main-nav a { color: var(--text-dim); }
+  nav.main-nav a:hover { color: var(--text); text-decoration: none; }
+
+  .btn-run {
+    background: var(--accent-2); color: #0d1117;
+    border: none; padding: 8px 18px; border-radius: 7px;
+    font-weight: 600; font-size: 14px; cursor: pointer;
+    transition: filter .15s ease;
+  }
+  .btn-run:hover { filter: brightness(1.1); }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  .hero { margin-bottom: 48px; }
+  .hero h1 {
+    font-size: 2.4rem; line-height: 1.15; margin: 0 0 16px;
+    letter-spacing: -0.02em;
+  }
+  .hero .lead { font-size: 1.1rem; color: var(--text-dim); max-width: 720px; margin: 0 0 24px; }
+
+  .cta-row { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 28px; }
+  .btn-primary {
+    background: var(--accent-2); color: #0d1117;
+    padding: 12px 26px; border-radius: 8px;
+    font-weight: 700; font-size: 15px; border: none; cursor: pointer;
+    text-decoration: none; display: inline-block;
+  }
+  .btn-primary:hover { filter: brightness(1.1); text-decoration: none; }
+  .btn-secondary {
+    background: transparent; color: var(--text);
+    padding: 11px 25px; border-radius: 8px;
+    font-weight: 600; font-size: 15px;
+    border: 1px solid var(--border);
+    text-decoration: none; display: inline-block;
+  }
+  .btn-secondary:hover { background: var(--bg-elev); text-decoration: none; }
+
+  .disclaimer {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--warn);
+    padding: 16px 20px;
+    border-radius: 0 8px 8px 0;
+    margin: 36px 0;
+    color: var(--text-dim);
+    font-size: 0.95rem;
+  }
+  .disclaimer strong { color: var(--warn); }
+
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
+    margin-top: 20px;
+  }
+  .feature {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+  }
+  .feature h3 {
+    margin: 0 0 8px;
+    font-size: 1.05rem;
+    color: var(--accent-2);
+  }
+  .feature p { margin: 0; color: var(--text-dim); font-size: 0.94rem; }
+
+  section.block { margin-bottom: 52px; }
+  section.block > h2 {
+    font-size: 1.5rem; margin: 0 0 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    letter-spacing: -0.01em;
+  }
+  section.block > h3 {
+    font-size: 1.1rem; margin: 26px 0 10px; color: var(--accent);
+  }
+  section.block p { color: var(--text-dim); }
+
+  pre {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    margin: 12px 0 20px;
+    font-family: "SF Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px; line-height: 1.6;
+  }
+  code { font-family: inherit; }
+  .tok-kw  { color: #ff7b72; }
+  .tok-fn  { color: #d2a8ff; }
+  .tok-str { color: #a5d6ff; }
+  .tok-num { color: #79c0ff; }
+  .tok-cm  { color: #8b949e; font-style: italic; }
+  .tok-id  { color: #e6edf3; }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.95rem; margin-top: 12px; }
+  thead th {
+    text-align: left; padding: 12px 16px;
+    background: var(--bg-elev); color: var(--text);
+    font-weight: 600; border-bottom: 1px solid var(--border);
+  }
+  tbody td {
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    color: var(--text-dim); vertical-align: top;
+  }
+  tbody tr:hover td { background: rgba(88,166,255,0.05); }
+  tbody td:first-child { color: var(--accent-2); font-weight: 600; white-space: nowrap; }
+
+  .note {
+    background: var(--bg-elev);
+    border-left: 3px solid var(--accent);
+    padding: 12px 18px; border-radius: 0 8px 8px 0;
+    color: var(--text-dim); font-size: 0.95rem; margin: 16px 0;
+  }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 30px 20px; text-align: center;
+    color: var(--text-dim); font-size: 14px;
+    background: var(--bg-elev);
+  }
+  footer .brand { color: var(--accent-2); font-weight: 600; }
+
+  @media (max-width: 700px) {
+    .hero h1 { font-size: 1.75rem; }
+    nav.main-nav { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-mark">T</div>
+      тарапо<span class="ru">.ру</span>
+    </div>
+    <nav class="main-nav">
+      <a href="editor.html">Редактор</a>
+      <a href="#about">О проекте</a>
+      <a href="#syntax">Синтаксис</a>
+      <a href="#libraries">Библиотеки</a>
+    </nav>
+    <a class="btn-run" href="editor.html">Открыть редактор</a>
+  </div>
+</header>
+
+<main class="container">
+
+  <div class="hero">
+    <h1>Учебная среда для выполнения кода на Python</h1>
+    <p class="lead">
+      <strong>тарапо.ру</strong> — студенческий образовательный проект. Это интерактивная песочница,
+      в которой можно писать и запускать код на Python прямо в браузере, без установки
+      интерпретатора на компьютер.
+    </p>
+
+    <div class="cta-row">
+      <a class="btn-primary" href="editor.html">Перейти в редактор →</a>
+      <a class="btn-secondary" href="#about">Что это за проект</a>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    <strong>Честно о терминах.</strong> Python — интерпретируемый язык. Код не компилируется
+    в машинный, а выполняется интерпретатором построчно. Поэтому мы сознательно называем
+    <em>тарапо.ру</em> не «компилятором», а <strong>средой для выполнения кода</strong> —
+    так корректнее и с точки зрения информатики, и с точки зрения учебной программы.
+  </div>
+
+  <section class="block" id="about">
+    <h2>О проекте</h2>
+    <p>
+      Проект создан как учебный инструмент для студентов, изучающих основы программирования
+      на Python. Цель — дать возможность запускать код на любом устройстве: в аудитории,
+      дома, с планшета или ноутбука, — не тратя время на настройку окружения.
+    </p>
+    <p>
+      Среда поддерживает ввод данных через stdin, что позволяет решать учебные задачи
+      с чтением входных данных и проверкой вывода.
+    </p>
+
+    <div class="features">
+      <div class="feature">
+        <h3>Без установки</h3>
+        <p>Всё работает в браузере. Не нужно ничего скачивать и настраивать пути к интерпретатору.</p>
+      </div>
+      <div class="feature">
+        <h3>Ввод через stdin</h3>
+        <p>Поддерживается чтение входных данных — как в задачах по олимпиадному программированию.</p>
+      </div>
+      <div class="feature">
+        <h3>Понятный вывод ошибок</h3>
+        <p>Трассировка выводится в отдельной консоли, чтобы было проще разбираться в причинах сбоя.</p>
+      </div>
+      <div class="feature">
+        <h3>Учебный фокус</h3>
+        <p>Никаких лишних настроек и плагинов: только редактор, консоль и stdin.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>Ввод данных (stdin)</h2>
+    <p>
+      Среда поддерживает ввод через stdin. Данные передаются в программу через отдельное
+      текстовое поле в редакторе. Пример чтения имени:
+    </p>
+    <pre><code><span class="tok-kw">import</span> <span class="tok-id">sys</span>
+<span class="tok-id">name</span> = <span class="tok-id">sys</span>.<span class="tok-id">stdin</span>.<span class="tok-fn">readline</span>()
+<span class="tok-fn">print</span>(<span class="tok-str">"Привет, "</span> + <span class="tok-id">name</span>)</code></pre>
+  </section>
+
+  <section class="block" id="syntax">
+    <h2>Справочник по синтаксису</h2>
+
+    <h3>1. Условия (if / elif / else)</h3>
+    <p>Используется, когда нужно выполнить действия в зависимости от условия.</p>
+    <pre><code><span class="tok-kw">if</span> <span class="tok-id">condition</span>:
+    <span class="tok-cm"># код</span>
+<span class="tok-kw">elif</span> <span class="tok-id">other</span>:
+    <span class="tok-cm"># код</span>
+<span class="tok-kw">else</span>:
+    <span class="tok-cm"># код</span></code></pre>
+
+    <div class="note">
+      <strong>Важно:</strong> в Python отступы — часть синтаксиса. Ошибка в отступе
+      приводит к <code>IndentationError</code>.
+    </div>
+
+    <h3>2. Цикл for</h3>
+    <p>Перебор элементов коллекции или строки.</p>
+    <pre><code><span class="tok-id">phones</span> = (<span class="tok-str">"iPhone"</span>, <span class="tok-str">"Pixel"</span>, <span class="tok-str">"Samsung"</span>)
+<span class="tok-kw">for</span> <span class="tok-id">p</span> <span class="tok-kw">in</span> <span class="tok-id">phones</span>:
+    <span class="tok-fn">print</span>(<span class="tok-id">p</span>)</code></pre>
+
+    <h3>3. Цикл while</h3>
+    <p>Применяется, когда число итераций заранее неизвестно.</p>
+    <pre><code><span class="tok-kw">while</span> <span class="tok-id">condition</span>:
+    <span class="tok-cm"># код</span></code></pre>
+  </section>
+
+  <section class="block">
+    <h2>Коллекции</h2>
+    <p>В Python четыре основных типа коллекций.</p>
+
+    <h3>1. Список (list)</h3>
+    <p>Упорядоченная изменяемая коллекция. Задаётся в квадратных скобках.</p>
+    <pre><code><span class="tok-id">mylist</span> = [<span class="tok-str">"iPhone"</span>, <span class="tok-str">"Pixel"</span>, <span class="tok-str">"Samsung"</span>]
+<span class="tok-fn">print</span>(<span class="tok-id">mylist</span>)</code></pre>
+
+    <h3>2. Кортеж (tuple)</h3>
+    <p>Упорядоченная неизменяемая коллекция. Задаётся в круглых скобках.</p>
+    <pre><code><span class="tok-id">myTuple</span> = (<span class="tok-str">"iPhone"</span>, <span class="tok-str">"Pixel"</span>, <span class="tok-str">"Samsung"</span>)
+<span class="tok-fn">print</span>(<span class="tok-id">myTuple</span>)</code></pre>
+
+    <h3>3. Множество (set)</h3>
+    <p>Неупорядоченная неиндексируемая коллекция. Задаётся в фигурных скобках.</p>
+    <pre><code><span class="tok-id">myset</span> = {<span class="tok-str">"iPhone"</span>, <span class="tok-str">"Pixel"</span>, <span class="tok-str">"Samsung"</span>}
+<span class="tok-fn">print</span>(<span class="tok-id">myset</span>)</code></pre>
+
+    <h3>4. Словарь (dict)</h3>
+    <p>Пары «ключ — значение». Изменяемый, индексируемый по ключу.</p>
+    <pre><code><span class="tok-id">mydict</span> = {
+    <span class="tok-str">"brand"</span>: <span class="tok-str">"iPhone"</span>,
+    <span class="tok-str">"model"</span>: <span class="tok-str">"iPhone 11"</span>
+}
+<span class="tok-fn">print</span>(<span class="tok-id">mydict</span>)</code></pre>
+  </section>
+
+  <section class="block" id="libraries">
+    <h2>Поддерживаемые библиотеки</h2>
+    <p>В учебной среде доступны следующие библиотеки Python:</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Название</th><th>Назначение</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>NumPy</td><td>Работа с массивами и численными вычислениями.</td></tr>
+          <tr><td>SciPy</td><td>Научные вычисления поверх NumPy.</td></tr>
+          <tr><td>Scikit-learn</td><td>Классические алгоритмы машинного обучения.</td></tr>
+          <tr><td>Pandas</td><td>Обработка и анализ табличных данных.</td></tr>
+          <tr><td>DOcplex</td><td>Моделирование задач оптимизации (IBM CPLEX).</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  © 2026 <span class="brand">тарапо.ру</span> — учебный проект. Среда для выполнения кода на Python.
+</footer>
+
+</body>
+</html>
