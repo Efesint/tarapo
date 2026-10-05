@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Редактор — тарапо.ру</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-elev: #161b22;
+    --bg-code: #1e242c;
+    --bg-console: #0a0e14;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-dim: #9da7b3;
+    --accent: #58a6ff;
+    --accent-2: #7ee787;
+    --danger: #ff7b72;
+    --warn: #d29922;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    height: 100%;
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    overflow: hidden;
+  }
+  a { color: var(--accent); text-decoration: none; }
+
+  /* ── Layout ─────────────────────────── */
+  .app {
+    display: grid;
+    grid-template-rows: 56px 1fr;
+    height: 100vh;
+  }
+
+  /* ── Header ─────────────────────────── */
+  header {
+    background: var(--bg-elev);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    gap: 16px;
+  }
+  .logo { display: flex; align-items: center; gap: 10px;
+    font-size: 18px; font-weight: 700; color: var(--text); }
+  .logo-mark {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: linear-gradient(135deg, #58a6ff, #7ee787);
+    display: grid; place-items: center;
+    font-size: 16px; font-weight: 800; color: #0d1117;
+  }
+  .logo span.ru { color: var(--accent-2); }
+
+  .header-actions { display: flex; align-items: center; gap: 10px; }
+
+  .btn {
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    padding: 7px 14px;
+    border-radius: 7px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .12s ease, border-color .12s ease;
+  }
+  .btn:hover { background: #1f2630; }
+  .btn-run {
+    background: var(--accent-2); color: #0d1117;
+    border-color: transparent;
+  }
+  .btn-run:hover { filter: brightness(1.1); background: var(--accent-2); }
+  .btn-run:disabled { opacity: 0.5; cursor: not-allowed; filter: none; }
+
+  /* ── Main grid ──────────────────────── */
+  .main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .pane {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    border-right: 1px solid var(--border);
+  }
+  .pane:last-child { border-right: none; }
+
+  .pane-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-elev);
+    border-bottom: 1px solid var(--border);
+    padding: 0 12px;
+    height: 40px;
+    flex-shrink: 0;
+  }
+  .pane-tabs { display: flex; gap: 2px; }
+  .pane-tab {
+    padding: 8px 14px;
+    font-size: 13px;
+    color: var(--text-dim);
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .pane-tab.active {
+    color: var(--accent-2);
+    background: rgba(126,231,135,0.08);
+    font-weight: 600;
+  }
+  .pane-tab:hover:not(.active) { color: var(--text); }
+
+  .pane-meta { font-size: 12px; color: var(--text-dim); }
+
+  /* ── Code editor ───────────────────── */
+  .editor-wrap {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    background: var(--bg-code);
+    display: grid;
+    grid-template-columns: 52px 1fr;
+  }
+  .gutter {
+    background: #10151c;
+    border-right: 1px solid var(--border);
+    color: #4d5766;
+    font-family: "SF Mono", "Fira Code", Consolas, monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    padding: 14px 10px 14px 0;
+    text-align: right;
+    user-select: none;
+    overflow: hidden;
+  }
+  textarea.code {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: none;
+    color: var(--text);
+    font-family: "SF Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    padding: 14px 16px;
+    tab-size: 4;
+    white-space: pre;
+    overflow: auto;
+    caret-color: var(--accent-2);
+  }
+  textarea.code::selection {
+    background: rgba(88,166,255,0.3);
+  }
+
+  /* ── Console / stdin ────────────────── */
+  .tab-content {
+    flex: 1;
+    min-height: 0;
+    display: none;
+    flex-direction: column;
+  }
+  .tab-content.active { display: flex; }
+
+  pre.console {
+    flex: 1;
+    min-height: 0;
+    margin: 0;
+    padding: 14px 16px;
+    background: var(--bg-console);
+    color: var(--text);
+    font-family: "SF Mono", "Fira Code", Consolas, monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  pre.console .out { color: var(--text); }
+  pre.console .err { color: var(--danger); }
+  pre.console .info { color: var(--text-dim); font-style: italic; }
+  pre.console .ok { color: var(--accent-2); }
+
+  textarea.stdin {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    background: var(--bg-console);
+    border: none;
+    outline: none;
+    resize: none;
+    color: var(--text);
+    font-family: "SF Mono", "Fira Code", Consolas, monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    padding: 14px 16px;
+    white-space: pre;
+    overflow: auto;
+  }
+  .stdin-hint {
+    background: var(--bg-elev);
+    border-top: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 12px;
+    padding: 8px 14px;
+    flex-shrink: 0;
+  }
+
+  /* ── Splitter ───────────────────────── */
+  .splitter {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 6px;
+    cursor: col-resize;
+    background: transparent;
+    z-index: 10;
+  }
+
+  /* ── Status bar ─────────────────────── */
+  .statusbar {
+    height: 26px;
+    background: var(--bg-elev);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    font-size: 12px;
+    color: var(--text-dim);
+    flex-shrink: 0;
+  }
+  .status-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent-2);
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .status-dot.busy { background: var(--warn); }
+
+  /* ── Mobile ─────────────────────────── */
+  @media (max-width: 820px) {
+    .main { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+    .pane { border-right: none; border-bottom: 1px solid var(--border); }
+    .pane:last-child { border-bottom: none; }
+    .logo span.full { display: none; }
+  }
+
+  /* ── Loading overlay ────────────────── */
+  .pyodide-overlay {
+    position: fixed; inset: 0;
+    background: rgba(13,17,23,0.85);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    z-index: 100;
+    color: var(--text);
+  }
+  .pyodide-overlay.show { display: flex; }
+  .spinner {
+    width: 42px; height: 42px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent-2);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+    margin-bottom: 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .pyodide-overlay p { color: var(--text-dim); margin: 0; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header>
+    <a class="logo" href="index.html">
+      <div class="logo-mark">T</div>
+      тарапо<span class="ru">.ру</span>
+      <span class="full" style="color:var(--text-dim);font-weight:400;font-size:14px;margin-left:6px">/ редактор</span>
+    </a>
+    <div class="header-actions">
+      <button class="btn" id="btn-clear" title="Очистить консоль">Очистить</button>
+      <button class="btn" id="btn-example" title="Вставить пример">Пример</button>
+      <button class="btn btn-run" id="btn-run">▶ Запустить</button>
+    </div>
+  </header>
+
+  <div class="main" id="main">
+
+    <!-- ЛЕВАЯ ПАНЕЛЬ: РЕДАКТОР -->
+    <div class="pane" id="pane-left">
+      <div class="pane-header">
+        <div class="pane-tabs">
+          <div class="pane-tab active">main.py</div>
+        </div>
+        <div class="pane-meta" id="editor-meta">Python 3 · строк: 1</div>
+      </div>
+      <div class="editor-wrap">
+        <div class="gutter" id="gutter">1</div>
+        <textarea
+          class="code"
+          id="code"
+          spellcheck="false"
+          autocapitalize="off"
+          autocomplete="off"
+          autocorrect="off"
+          wrap="off"
+        ># тарапо.ру — учебная среда Python
+# Напишите код и нажмите «Запустить»
+
+def greet(name):
+    return f"Привет, {name}!"
+
+print(greet("студент"))
+
+for i in range(3):
+    print("Строка", i)
+</textarea>
+      </div>
+    </div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ: КОНСОЛЬ + STDIN -->
+    <div class="pane" id="pane-right">
+      <div class="pane-header">
+        <div class="pane-tabs">
+          <div class="pane-tab active" data-tab="output">Вывод</div>
+          <div class="pane-tab" data-tab="stdin">Ввод (stdin)</div>
+        </div>
+        <div class="pane-meta" id="runtime-meta">Готово</div>
+      </div>
+
+      <div class="tab-content active" id="tab-output">
+        <pre class="console" id="output"><span class="info">Здесь появится результат выполнения программы.</span></pre>
+      </div>
+
+      <div class="tab-content" id="tab-stdin">
+        <textarea
+          class="stdin"
+          id="stdin"
+          spellcheck="false"
+          placeholder="Введите данные, которые программа прочитает через input() или sys.stdin..."
+        ></textarea>
+        <div class="stdin-hint">
+          Каждая строка здесь — отдельная строка ввода для программы (аналог нажатия Enter).
+        </div>
+      </div>
+
+      <div class="statusbar">
+        <span><span class="status-dot" id="status-dot"></span><span id="status-text">Готово</span></span>
+        <span id="time-meta">—</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Оверлей загрузки Pyodide -->
+<div class="pyodide-overlay" id="overlay">
+  <div class="spinner"></div>
+  <p id="overlay-text">Загружаем среду выполнения Python…</p>
+</div>
+
+<script>
+/* =========================================================
+   тарапо.ру — учебный редактор Python
+   Выполнение кода: Pyodide (CPython, скомпилированный в WASM)
+   ========================================================= */
+
+const codeEl    = document.getElementById('code');
+const gutterEl  = document.getElementById('gutter');
+const outputEl  = document.getElementById('output');
+const stdinEl   = document.getElementById('stdin');
+const runBtn    = document.getElementById('btn-run');
+const clearBtn  = document.getElementById('btn-clear');
+const exBtn     = document.getElementById('btn-example');
+const statusDot = document.getElementById('status-dot');
+const statusTxt = document.getElementById('status-text');
+const timeMeta  = document.getElementById('time-meta');
+const editorMeta= document.getElementById('editor-meta');
+const overlay   = document.getElementById('overlay');
+const overlayTx = document.getElementById('overlay-text');
+
+let pyodide = null;
+let pyodideLoading = false;
+let pyodideReady = false;
+
+/* ── Нумерация строк ─────────────────────── */
+function updateGutter() {
+  const lines = codeEl.value.split('\n').length;
+  let s = '';
+  for (let i = 1; i <= lines; i++) s += i + '\n';
+  gutterEl.textContent = s;
+  editorMeta.textContent = 'Python 3 · строк: ' + lines;
+}
+
+codeEl.addEventListener('input', updateGutter);
+codeEl.addEventListener('scroll', () => {
+  gutterEl.scrollTop = codeEl.scrollTop;
+});
+
+/* Tab внутри textarea вставляет 4 пробела */
+codeEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const start = codeEl.selectionStart;
+    const end = codeEl.selectionEnd;
+    codeEl.value = codeEl.value.slice(0, start) + '    ' + codeEl.value.slice(end);
+    codeEl.selectionStart = codeEl.selectionEnd = start + 4;
+    update
